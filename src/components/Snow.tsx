@@ -60,7 +60,8 @@ function Flake({
 }
 
 export function Snow() {
-  const { theme } = useTheme();
+  const { theme, snow } = useTheme();
+  if (!snow) return null;
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {FLAKES.map((flake) => (

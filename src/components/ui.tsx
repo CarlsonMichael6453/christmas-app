@@ -1,11 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View, type KeyboardTypeOptions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useApp } from '@/src/backend/AppState';
-import { Snow } from '@/src/components/Snow';
-import { StringLights } from '@/src/components/StringLights';
 import { garlandHeight } from '@/src/theme/lights';
 import { useTheme } from '@/src/theme/ThemeProvider';
 
@@ -20,14 +18,13 @@ export function Screen({
 }) {
   const { theme, lights } = useTheme();
   const insets = useSafeAreaInsets();
-  const [columnWidth, setColumnWidth] = useState(0);
   const garland = garlandHeight(lights);
   const body = scroll ? (
     <ScrollView
       scrollEnabled={scrollEnabled}
       contentContainerStyle={{
         padding: 16,
-        paddingTop: garland > 0 ? 8 : insets.top + 8,
+        paddingTop: insets.top + 8 + garland,
         paddingBottom: insets.bottom + 28,
         gap: 12,
       }}
@@ -37,25 +34,14 @@ export function Screen({
       {children}
     </ScrollView>
   ) : (
-    <View style={{ flex: 1, padding: 16, paddingTop: garland > 0 ? 8 : insets.top + 8, paddingBottom: insets.bottom + 12 }}>
+    <View style={{ flex: 1, padding: 16, paddingTop: insets.top + 8 + garland, paddingBottom: insets.bottom + 12 }}>
       <ErrorNote />
       {children}
     </View>
   );
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.bg, alignItems: 'center' }}>
-      <View
-        onLayout={(event) => setColumnWidth(event.nativeEvent.layout.width)}
-        style={{ flex: 1, width: '100%', maxWidth: 560 }}
-      >
-        {garland > 0 ? (
-          <View pointerEvents="none" style={{ height: insets.top + garland, justifyContent: 'flex-end' }}>
-            <StringLights width={columnWidth} />
-          </View>
-        ) : null}
-        {body}
-      </View>
-      <Snow />
+      <View style={{ flex: 1, width: '100%', maxWidth: 560 }}>{body}</View>
     </View>
   );
 }

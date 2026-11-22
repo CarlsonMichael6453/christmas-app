@@ -7,6 +7,7 @@ import { defaultThemeId, findTheme, themes, type Theme } from '@/src/theme/theme
 
 const KEY = 'christmas-family-theme';
 const LIGHTS_KEY = 'christmas-family-lights';
+const SNOW_KEY = 'christmas-family-snow';
 
 export type AppFonts = {
   regular?: string;
@@ -23,6 +24,8 @@ type ThemeApi = {
   lights: LightOption;
   lightOptions: LightOption[];
   setLights: (id: string) => void;
+  snow: boolean;
+  setSnow: (value: boolean) => void;
   ready: boolean;
   fonts: AppFonts;
 };
@@ -32,6 +35,7 @@ const ThemeContext = createContext<ThemeApi | null>(null);
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [themeId, setThemeId] = useState(defaultThemeId);
   const [lightId, setLightId] = useState(defaultLightId);
+  const [snow, setSnowState] = useState(true);
   const [stored, setStored] = useState(false);
   const [loaded] = useFonts({
     Nunito_400Regular: require('../../assets/fonts/Nunito_400Regular.ttf'),
@@ -43,11 +47,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    void Promise.all([AsyncStorage.getItem(KEY), AsyncStorage.getItem(LIGHTS_KEY)]).then(([savedTheme, savedLights]) => {
-      if (savedTheme && themes.some((entry) => entry.id === savedTheme)) setThemeId(savedTheme);
-      if (savedLights && lightOptions.some((entry) => entry.id === savedLights)) setLightId(savedLights);
-      setStored(true);
-    });
+    void Promise.all([AsyncStorage.getItem(KEY), AsyncStorage.getItem(LIGHTS_KEY), AsyncStorage.getItem(SNOW_KEY)]).then(
+      ([savedTheme, savedLights, savedSnow]) => {
+        if (savedTheme && themes.some((entry) => entry.id === savedTheme)) setThemeId(savedTheme);
+        if (savedLights && lightOptions.some((entry) => entry.id === savedLights)) setLightId(savedLights);
+        if (savedSnow === 'off') setSnowState(false);
+        setStored(true);
+      },
+    );
   }, []);
 
   const value = useMemo<ThemeApi>(() => {
@@ -73,10 +80,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setLightId(id);
         void AsyncStorage.setItem(LIGHTS_KEY, id);
       },
+      snow,
+      setSnow: (value: boolean) => {
+        setSnowState(value);
+        void AsyncStorage.setItem(SNOW_KEY, value ? 'on' : 'off');
+      },
       ready: stored && loaded,
       fonts,
     };
-  }, [lightId, loaded, stored, themeId]);
+  }, [lightId, loaded, snow, stored, themeId]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
