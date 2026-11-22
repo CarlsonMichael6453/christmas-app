@@ -1,10 +1,21 @@
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { Linking, Platform, Pressable, Text, View } from 'react-native';
 
 import { useApp } from '@/src/backend/AppState';
 import { BackButton, Button, Card, Field, GroupPrompt, Heading, Muted, Screen, Title } from '@/src/components/ui';
 import { money } from '@/src/logic/format';
 import { useTheme } from '@/src/theme/ThemeProvider';
+
+const TIP_TRACKER_URL = 'https://carlsonmichael6453.github.io/tiptracker/';
+
+function openTipTracker() {
+  if (Platform.OS === 'web') {
+    const browser = globalThis as { open?: (url: string, target?: string, features?: string) => void };
+    browser.open?.(TIP_TRACKER_URL, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  void Linking.openURL(TIP_TRACKER_URL);
+}
 
 export default function Budget() {
   const { group, user, budgetTotal, setBudgetTotal, spending, nameOf } = useApp();
@@ -39,6 +50,27 @@ export default function Budget() {
         <Field label="My total budget" value={draft} onChangeText={setDraft} keyboardType="decimal-pad" placeholder="150" />
         <Button label="Save budget" onPress={() => void setBudgetTotal(Number(draft) || 0)} />
       </Card>
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel="Track your tips and budget with Tip Tracker"
+        onPress={openTipTracker}
+        style={{
+          backgroundColor: theme.colors.secondary,
+          borderRadius: 20,
+          padding: 16,
+          gap: 6,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+        }}
+      >
+        <Text style={{ fontSize: 22 }}>🎁</Text>
+        <Text style={{ color: theme.colors.onSecondary, fontFamily: fonts.bold, fontSize: 18, lineHeight: 24 }}>
+          Track your tips & budget with Tip Tracker
+        </Text>
+        <Text style={{ color: theme.colors.onSecondary, fontFamily: fonts.regular, fontSize: 15, lineHeight: 21, opacity: 0.92 }}>
+          Log shifts and tips so you know what you can spend on gifts.
+        </Text>
+      </Pressable>
       <Heading>What you bought</Heading>
       {[...byPerson.entries()].map(([ownerId, total]) => (
         <Card key={ownerId}>
