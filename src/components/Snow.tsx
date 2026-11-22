@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { Animated, Platform, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '@/src/theme/ThemeProvider';
 
@@ -30,11 +30,11 @@ function Flake({
           toValue: 900,
           duration: flake.duration,
           delay: flake.delay,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
         Animated.sequence([
-          Animated.timing(x, { toValue: flake.drift, duration: flake.duration / 2, useNativeDriver: true }),
-          Animated.timing(x, { toValue: -flake.drift / 2, duration: flake.duration / 2, useNativeDriver: true }),
+          Animated.timing(x, { toValue: flake.drift, duration: flake.duration / 2, useNativeDriver: Platform.OS !== 'web' }),
+          Animated.timing(x, { toValue: -flake.drift / 2, duration: flake.duration / 2, useNativeDriver: Platform.OS !== 'web' }),
         ]),
       ]),
     );

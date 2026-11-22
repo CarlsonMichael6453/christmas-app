@@ -25,7 +25,9 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "themeColor": "#8E1B2C",
+      "name": "Christmas Family"
     },
     "plugins": [
       "expo-router",
@@ -40,7 +42,8 @@
       "expo-sqlite"
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "baseUrl": "/christmas-app"
     }
   }
 }

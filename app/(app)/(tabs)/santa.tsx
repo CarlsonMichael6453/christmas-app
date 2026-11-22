@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, Text, View } from 'react-native';
+import { Animated, Platform, Pressable, Text, View } from 'react-native';
 
 import { useApp } from '@/src/backend/AppState';
 import { Button, Card, Field, GroupPrompt, Heading, Muted, Screen, Title } from '@/src/components/ui';
@@ -204,9 +204,9 @@ function SlipPull({ onPull }: { onPull: () => void }) {
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(spin, { toValue: 1, duration: 180, useNativeDriver: true }),
-        Animated.timing(spin, { toValue: -1, duration: 180, useNativeDriver: true }),
-        Animated.timing(spin, { toValue: 0, duration: 180, useNativeDriver: true }),
+        Animated.timing(spin, { toValue: 1, duration: 180, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(spin, { toValue: -1, duration: 180, useNativeDriver: Platform.OS !== 'web' }),
+        Animated.timing(spin, { toValue: 0, duration: 180, useNativeDriver: Platform.OS !== 'web' }),
       ]),
     );
     loop.start();

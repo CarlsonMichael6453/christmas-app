@@ -7,6 +7,7 @@ import { useTheme } from '@/src/theme/ThemeProvider';
 export default function TabLayout() {
   const { theme, fonts } = useTheme();
   const insets = useSafeAreaInsets();
+  const bottom = Math.max(insets.bottom, 8);
   return (
     <Tabs
       screenOptions={{
@@ -16,11 +17,11 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: theme.colors.tabBar,
           borderTopColor: theme.colors.border,
-          height: 58 + insets.bottom,
-          paddingBottom: Math.max(insets.bottom, 8),
+          height: 74 + bottom,
+          paddingBottom: bottom,
           paddingTop: 6,
         },
-        tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 11 },
+        tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 11, lineHeight: 14 },
       }}
     >
       <Tabs.Screen
