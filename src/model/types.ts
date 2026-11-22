@@ -69,6 +69,8 @@ export type Assignment = {
 
 export type Stroke = {
   color: string;
+  width?: number;
+  erase?: boolean;
   points: { x: number; y: number }[];
 };
 
@@ -79,6 +81,7 @@ export type Letter = {
   title: string;
   body: string;
   strokes: Stroke[];
+  paper?: string;
   createdAt: string;
 };
 

@@ -7,11 +7,20 @@ import { useApp } from '@/src/backend/AppState';
 import { Snow } from '@/src/components/Snow';
 import { useTheme } from '@/src/theme/ThemeProvider';
 
-export function Screen({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
+export function Screen({
+  children,
+  scroll = true,
+  scrollEnabled = true,
+}: {
+  children: ReactNode;
+  scroll?: boolean;
+  scrollEnabled?: boolean;
+}) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const body = scroll ? (
     <ScrollView
+      scrollEnabled={scrollEnabled}
       contentContainerStyle={{
         padding: 16,
         paddingTop: insets.top + 8,
