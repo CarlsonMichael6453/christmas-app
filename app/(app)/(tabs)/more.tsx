@@ -29,7 +29,7 @@ const sections: {
         href: '/(app)/settings',
         emoji: '🎨',
         title: 'Themes and sign-in',
-        blurb: 'Winter themes, preview doors, switch people, sign out',
+        blurb: 'Winter themes, string lights, preview doors, switch people, sign out',
       },
     ],
   },

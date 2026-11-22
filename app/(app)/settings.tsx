@@ -4,11 +4,12 @@ import { Pressable, Switch, Text, View } from 'react-native';
 
 import { useApp } from '@/src/backend/AppState';
 import { BackButton, Button, Card, Field, Heading, Muted, Screen, Title } from '@/src/components/ui';
+import { LightPreview } from '@/src/components/StringLights';
 import { useTheme } from '@/src/theme/ThemeProvider';
 
 export default function Settings() {
   const app = useApp();
-  const { theme, themes, setTheme, fonts } = useTheme();
+  const { theme, themes, setTheme, lights, lightOptions, setLights, fonts } = useTheme();
   const [name, setName] = useState(app.user?.displayName ?? '');
 
   return (
@@ -38,6 +39,34 @@ export default function Settings() {
           />
         </View>
       </Card>
+      <Heading>String lights</Heading>
+      <Muted>A garland across the top of the app. None turns it off.</Muted>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+        {lightOptions.map((option) => {
+          const selected = option.id === lights.id;
+          return (
+            <Pressable
+              key={option.id}
+              accessibilityLabel={option.name}
+              onPress={() => setLights(option.id)}
+              style={{
+                width: '48%',
+                backgroundColor: theme.colors.card,
+                borderRadius: 16,
+                padding: 10,
+                borderWidth: selected ? 2 : 1,
+                borderColor: selected ? theme.colors.primary : theme.colors.border,
+                gap: 6,
+              }}
+            >
+              <View style={{ height: 36, borderRadius: 10, overflow: 'hidden', backgroundColor: theme.colors.bg }}>
+                <LightPreview id={option.id} width={150} />
+              </View>
+              <Text style={{ color: theme.colors.text, fontFamily: fonts.bold, fontSize: 14 }}>{option.name}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
       <Heading>Color themes</Heading>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
         {themes.map((entry) => {

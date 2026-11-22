@@ -2,9 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFonts } from 'expo-font';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { defaultLightId, findLights, lightOptions, type LightOption } from '@/src/theme/lights';
 import { defaultThemeId, findTheme, themes, type Theme } from '@/src/theme/themes';
 
 const KEY = 'christmas-family-theme';
+const LIGHTS_KEY = 'christmas-family-lights';
 
 export type AppFonts = {
   regular?: string;
@@ -18,6 +20,9 @@ type ThemeApi = {
   theme: Theme;
   themes: Theme[];
   setTheme: (id: string) => void;
+  lights: LightOption;
+  lightOptions: LightOption[];
+  setLights: (id: string) => void;
   ready: boolean;
   fonts: AppFonts;
 };
@@ -26,6 +31,7 @@ const ThemeContext = createContext<ThemeApi | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [themeId, setThemeId] = useState(defaultThemeId);
+  const [lightId, setLightId] = useState(defaultLightId);
   const [stored, setStored] = useState(false);
   const [loaded] = useFonts({
     Nunito_400Regular: require('../../assets/fonts/Nunito_400Regular.ttf'),
@@ -37,8 +43,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    void AsyncStorage.getItem(KEY).then((saved) => {
-      if (saved && themes.some((entry) => entry.id === saved)) setThemeId(saved);
+    void Promise.all([AsyncStorage.getItem(KEY), AsyncStorage.getItem(LIGHTS_KEY)]).then(([savedTheme, savedLights]) => {
+      if (savedTheme && themes.some((entry) => entry.id === savedTheme)) setThemeId(savedTheme);
+      if (savedLights && lightOptions.some((entry) => entry.id === savedLights)) setLightId(savedLights);
       setStored(true);
     });
   }, []);
@@ -60,10 +67,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setThemeId(id);
         void AsyncStorage.setItem(KEY, id);
       },
+      lights: findLights(lightId),
+      lightOptions,
+      setLights: (id: string) => {
+        setLightId(id);
+        void AsyncStorage.setItem(LIGHTS_KEY, id);
+      },
       ready: stored && loaded,
       fonts,
     };
-  }, [loaded, stored, themeId]);
+  }, [lightId, loaded, stored, themeId]);
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
