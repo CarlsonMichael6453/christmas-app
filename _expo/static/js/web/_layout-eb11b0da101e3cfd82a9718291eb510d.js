@@ -1,0 +1,1 @@
+__d(function(g,r,i,a,m,e,d){"use strict";Object.defineProperty(e,'__esModule',{value:!0}),Object.defineProperty(e,"default",{enumerable:!0,get:function(){return s}});var n=r(d[0]),t=r(d[1]),u=r(d[2]);function s(){const{user:s,ready:c}=(0,t.useApp)();return c?s?(0,u.jsx)(n.Stack,{screenOptions:{headerShown:!1}}):(0,u.jsx)(n.Redirect,{href:"/sign-in"}):null}},766,[853,856,6]);
