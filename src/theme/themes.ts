@@ -1,0 +1,340 @@
+export type ThemeColors = {
+  bg: string;
+  surface: string;
+  surfaceAlt: string;
+  text: string;
+  textMuted: string;
+  primary: string;
+  onPrimary: string;
+  secondary: string;
+  onSecondary: string;
+  accent: string;
+  onAccent: string;
+  border: string;
+  danger: string;
+  success: string;
+  card: string;
+  snow: string;
+  tabBar: string;
+  input: string;
+  star: string;
+  overlay: string;
+  gradient: [string, string];
+};
+
+export type Theme = {
+  id: string;
+  name: string;
+  description: string;
+  isDark: boolean;
+  swatches: [string, string, string];
+  colors: ThemeColors;
+};
+
+function theme(
+  partial: Omit<Theme, 'colors' | 'swatches'> & { colors: ThemeColors; swatches?: [string, string, string] },
+): Theme {
+  return {
+    ...partial,
+    swatches: partial.swatches ?? [partial.colors.primary, partial.colors.secondary, partial.colors.accent],
+  };
+}
+
+export const themes: Theme[] = [
+  theme({
+    id: 'classic',
+    name: 'Classic Christmas',
+    description: 'Deep red, evergreen, and snow white.',
+    isDark: false,
+    colors: {
+      bg: '#F7F1E8',
+      surface: '#FFFCF8',
+      surfaceAlt: '#F3E6D8',
+      text: '#2A1814',
+      textMuted: '#7A5E56',
+      primary: '#8E1B2C',
+      onPrimary: '#FFF8F4',
+      secondary: '#1E4D3A',
+      onSecondary: '#F3FFF8',
+      accent: '#C4A265',
+      onAccent: '#2A1814',
+      border: '#E6D9CC',
+      danger: '#9B2335',
+      success: '#1E4D3A',
+      card: '#FFFCF8',
+      snow: '#D5E3EE',
+      tabBar: '#FFFCF8',
+      input: '#FFFFFF',
+      star: '#C4A265',
+      overlay: 'rgba(42, 24, 20, 0.45)',
+      gradient: ['#8E1B2C', '#5C1420'],
+    },
+  }),
+  theme({
+    id: 'candy',
+    name: 'Candy Cane',
+    description: 'Peppermint red and white with a blush stripe.',
+    isDark: false,
+    colors: {
+      bg: '#FFF5F6',
+      surface: '#FFFFFF',
+      surfaceAlt: '#FFE4E8',
+      text: '#3A1020',
+      textMuted: '#8A5362',
+      primary: '#D7263D',
+      onPrimary: '#FFFFFF',
+      secondary: '#F4A4B0',
+      onSecondary: '#3A1020',
+      accent: '#7A1028',
+      onAccent: '#FFFFFF',
+      border: '#F3D0D6',
+      danger: '#A11228',
+      success: '#2F6B4F',
+      card: '#FFFFFF',
+      snow: '#F7C5CE',
+      tabBar: '#FFFFFF',
+      input: '#FFFFFF',
+      star: '#D7263D',
+      overlay: 'rgba(58, 16, 32, 0.4)',
+      gradient: ['#D7263D', '#F08A98'],
+    },
+  }),
+  theme({
+    id: 'winter',
+    name: 'Winter Wonderland',
+    description: 'Icy blues and silver.',
+    isDark: false,
+    colors: {
+      bg: '#E7F3F8',
+      surface: '#F8FCFD',
+      surfaceAlt: '#D7EAF2',
+      text: '#14323F',
+      textMuted: '#5C7A88',
+      primary: '#1F6F8A',
+      onPrimary: '#F4FBFD',
+      secondary: '#8AA4B3',
+      onSecondary: '#102028',
+      accent: '#E8F4FA',
+      onAccent: '#14323F',
+      border: '#C5D9E2',
+      danger: '#A33B4A',
+      success: '#1F6F8A',
+      card: '#F8FCFD',
+      snow: '#7EACC0',
+      tabBar: '#F8FCFD',
+      input: '#FFFFFF',
+      star: '#8AA4B3',
+      overlay: 'rgba(20, 50, 63, 0.4)',
+      gradient: ['#1F6F8A', '#8FB8C9'],
+    },
+  }),
+  theme({
+    id: 'gingerbread',
+    name: 'Gingerbread',
+    description: 'Brown spice, icing, and a gumdrop green.',
+    isDark: false,
+    colors: {
+      bg: '#F6E6D0',
+      surface: '#FFF8EE',
+      surfaceAlt: '#F0D7B8',
+      text: '#3B2416',
+      textMuted: '#8A6248',
+      primary: '#7A3E22',
+      onPrimary: '#FFF8EE',
+      secondary: '#2F6B4F',
+      onSecondary: '#F3FFF6',
+      accent: '#C44536',
+      onAccent: '#FFF8F4',
+      border: '#E4CDB4',
+      danger: '#C44536',
+      success: '#2F6B4F',
+      card: '#FFF8EE',
+      snow: '#FFF1DE',
+      tabBar: '#FFF8EE',
+      input: '#FFFFFF',
+      star: '#C44536',
+      overlay: 'rgba(59, 36, 22, 0.45)',
+      gradient: ['#7A3E22', '#C44536'],
+    },
+  }),
+  theme({
+    id: 'midnight',
+    name: 'Midnight Snow',
+    description: 'A dark winter night with red and gold.',
+    isDark: true,
+    colors: {
+      bg: '#0E1720',
+      surface: '#182632',
+      surfaceAlt: '#213242',
+      text: '#F4F7FB',
+      textMuted: '#A9B8C6',
+      primary: '#E25B6A',
+      onPrimary: '#2A0C12',
+      secondary: '#7DCEA0',
+      onSecondary: '#062216',
+      accent: '#E6C07B',
+      onAccent: '#2A2110',
+      border: '#2C3E4E',
+      danger: '#FF8B96',
+      success: '#7DCEA0',
+      card: '#182632',
+      snow: '#F4F7FB',
+      tabBar: '#101C26',
+      input: '#101C26',
+      star: '#E6C07B',
+      overlay: 'rgba(0, 0, 0, 0.55)',
+      gradient: ['#8E2433', '#182632'],
+    },
+  }),
+  theme({
+    id: 'evergreen',
+    name: 'Evergreen & Gold',
+    description: 'Forest green with brass bells.',
+    isDark: false,
+    colors: {
+      bg: '#F3F6F1',
+      surface: '#FFFFFF',
+      surfaceAlt: '#E3EEE6',
+      text: '#10261C',
+      textMuted: '#5E7368',
+      primary: '#0F3D2E',
+      onPrimary: '#F4FFF9',
+      secondary: '#C6A15B',
+      onSecondary: '#241C0C',
+      accent: '#E7F2EA',
+      onAccent: '#0F3D2E',
+      border: '#D5E2D8',
+      danger: '#8E1B2C',
+      success: '#0F3D2E',
+      card: '#FFFFFF',
+      snow: '#D5E4DC',
+      tabBar: '#FFFFFF',
+      input: '#FFFFFF',
+      star: '#C6A15B',
+      overlay: 'rgba(16, 38, 28, 0.45)',
+      gradient: ['#0F3D2E', '#1E6B4A'],
+    },
+  }),
+  theme({
+    id: 'pastel',
+    name: 'Frosty Pastel',
+    description: 'Blush, mint, and a little lavender.',
+    isDark: false,
+    colors: {
+      bg: '#F7F4FB',
+      surface: '#FFFFFF',
+      surfaceAlt: '#F0E7F6',
+      text: '#342C45',
+      textMuted: '#7D7390',
+      primary: '#C86B84',
+      onPrimary: '#FFFFFF',
+      secondary: '#7EBEA6',
+      onSecondary: '#10241C',
+      accent: '#C7B6E2',
+      onAccent: '#2C2144',
+      border: '#E6DEF2',
+      danger: '#B44B62',
+      success: '#3E8F74',
+      card: '#FFFFFF',
+      snow: '#E4D8F2',
+      tabBar: '#FFFFFF',
+      input: '#FFFFFF',
+      star: '#D0A85A',
+      overlay: 'rgba(52, 44, 69, 0.4)',
+      gradient: ['#E7A3B8', '#B7A1DC'],
+    },
+  }),
+  theme({
+    id: 'aurora',
+    name: 'Northern Lights',
+    description: 'Aurora green, violet, and night sky.',
+    isDark: true,
+    colors: {
+      bg: '#07141C',
+      surface: '#102430',
+      surfaceAlt: '#163244',
+      text: '#E9FFF8',
+      textMuted: '#9ED9C8',
+      primary: '#5DCAA5',
+      onPrimary: '#04241A',
+      secondary: '#7B6CFF',
+      onSecondary: '#FFFFFF',
+      accent: '#E36CA6',
+      onAccent: '#2A1020',
+      border: '#1C3A48',
+      danger: '#FF8FB4',
+      success: '#5DCAA5',
+      card: '#102430',
+      snow: '#E9FFF8',
+      tabBar: '#081820',
+      input: '#0C1C26',
+      star: '#D6C4FF',
+      overlay: 'rgba(0, 0, 0, 0.55)',
+      gradient: ['#145C48', '#3A2E86'],
+    },
+  }),
+  theme({
+    id: 'cocoa',
+    name: 'Hot Cocoa',
+    description: 'Cocoa, cream, and a marshmallow top.',
+    isDark: false,
+    colors: {
+      bg: '#F8EFE8',
+      surface: '#FFF9F5',
+      surfaceAlt: '#F3D5C4',
+      text: '#3A2422',
+      textMuted: '#8A645C',
+      primary: '#6B332C',
+      onPrimary: '#FFF8F4',
+      secondary: '#C9844A',
+      onSecondary: '#2A160C',
+      accent: '#F3D5C4',
+      onAccent: '#3A2422',
+      border: '#E7D2C6',
+      danger: '#A33B4A',
+      success: '#2F6B4F',
+      card: '#FFF9F5',
+      snow: '#FFF4EC',
+      tabBar: '#FFF9F5',
+      input: '#FFFFFF',
+      star: '#C9844A',
+      overlay: 'rgba(58, 36, 34, 0.45)',
+      gradient: ['#6B332C', '#C9844A'],
+    },
+  }),
+  theme({
+    id: 'silver',
+    name: 'Silver Bells',
+    description: 'Charcoal, ice, and a soft gold bell.',
+    isDark: false,
+    colors: {
+      bg: '#F3F4F6',
+      surface: '#FFFFFF',
+      surfaceAlt: '#E6E9ED',
+      text: '#23282E',
+      textMuted: '#6C7580',
+      primary: '#3E4C59',
+      onPrimary: '#F7F8F9',
+      secondary: '#8AA4B5',
+      onSecondary: '#102028',
+      accent: '#C6A15B',
+      onAccent: '#241C0C',
+      border: '#E1E4E8',
+      danger: '#8E1B2C',
+      success: '#2F6B4F',
+      card: '#FFFFFF',
+      snow: '#C5CED6',
+      tabBar: '#FFFFFF',
+      input: '#FFFFFF',
+      star: '#C6A15B',
+      overlay: 'rgba(35, 40, 46, 0.45)',
+      gradient: ['#3E4C59', '#8AA4B5'],
+    },
+  }),
+];
+
+export const defaultThemeId = 'classic';
+
+export function findTheme(id: string | null | undefined): Theme {
+  return themes.find((theme) => theme.id === id) ?? themes[0]!;
+}
