@@ -10,10 +10,11 @@ export type Prefs = {
   currentGroupId: string | null;
   previewAdvent: boolean;
   seenSlips: SeenSlip[];
+  localDemo: boolean;
 };
 
 export function emptyPrefs(): Prefs {
-  return { currentGroupId: null, previewAdvent: false, seenSlips: [] };
+  return { currentGroupId: null, previewAdvent: false, seenSlips: [], localDemo: false };
 }
 
 export async function loadLocal(): Promise<DB> {

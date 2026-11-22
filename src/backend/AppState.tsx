@@ -184,9 +184,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [db, setDb] = useState<DB | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [localDemo, setLocalDemo] = useState(false);
   const dbRef = useRef<DB | null>(null);
-  const prefsRef = useRef<Prefs>({ currentGroupId: null, previewAdvent: false, seenSlips: [] });
-  const mode: 'phone' | 'supabase' = supabaseConfigured ? 'supabase' : 'phone';
+  const prefsRef = useRef<Prefs>({ currentGroupId: null, previewAdvent: false, seenSlips: [], localDemo: false });
+  const mode: 'phone' | 'supabase' = supabaseConfigured && !localDemo ? 'supabase' : 'phone';
 
   const refreshRemote = useCallback(async () => {
     const prefs = prefsRef.current;
@@ -204,6 +205,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (supabaseConfigured && supabase) {
         const { data } = await supabase.auth.getSession();
         if (data.session) {
+          prefsRef.current = { ...prefsRef.current, localDemo: false };
+          if (!cancelled) setLocalDemo(false);
           try {
             await refreshRemote();
           } catch (loadError) {
@@ -214,8 +217,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
               setError(problem(loadError, 'Could not reach Supabase. Showing the last saved copy.'));
             }
           }
+        } else if (prefs.localDemo) {
+          const local = await loadLocal();
+          if (!cancelled && local.sessionUserId) {
+            setLocalDemo(true);
+            dbRef.current = local;
+            setDb(local);
+          } else if (!cancelled) {
+            const empty = (await import('@/src/backend/mutate')).emptyDB();
+            prefsRef.current = { ...prefsRef.current, localDemo: false };
+            setLocalDemo(false);
+            dbRef.current = empty;
+            setDb(empty);
+          }
         } else if (!cancelled) {
           const empty = (await import('@/src/backend/mutate')).emptyDB();
+          setLocalDemo(false);
           dbRef.current = empty;
           setDb(empty);
         }
@@ -394,15 +411,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (mode === 'phone') void saveLocal(next);
       },
       signInName: async (name) => {
-        if (mode === 'supabase') return afterRemote(() => remoteSignInName(name.trim()));
+        if (supabaseConfigured) {
+          prefsRef.current = { ...prefsRef.current, localDemo: false };
+          await savePrefs(prefsRef.current);
+          setLocalDemo(false);
+          return afterRemote(() => remoteSignInName(name.trim()));
+        }
         return commit((draft) => signInWithName(draft, name));
       },
       signInEmail: async (email, password, name) => {
-        if (mode === 'supabase') return afterRemote(() => remoteSignInEmail(email, password, name));
+        if (supabaseConfigured) {
+          prefsRef.current = { ...prefsRef.current, localDemo: false };
+          await savePrefs(prefsRef.current);
+          setLocalDemo(false);
+          return afterRemote(() => remoteSignInEmail(email, password, name));
+        }
         return commit((draft) => signInWithEmail(draft, email, password, name));
       },
       signOut: async () => {
-        if (mode === 'supabase') {
+        if (supabaseConfigured && !prefsRef.current.localDemo) {
           await remoteSignOut();
           const { emptyDB } = await import('@/src/backend/mutate');
           const empty = emptyDB();
@@ -410,17 +437,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
           setDb(empty);
           return;
         }
+        prefsRef.current = { ...prefsRef.current, localDemo: false };
+        await savePrefs(prefsRef.current);
+        setLocalDemo(false);
         commit((draft) => signOutMut(draft));
       },
       loadDemo: async () => {
-        if (mode !== 'phone') {
-          setError('The Carlson demo stays on this phone. Clear the Supabase keys in .env to load it.');
-          return false;
-        }
         const next = demoDatabase();
         dbRef.current = next;
         setDb(next);
         await saveLocal(next);
+        prefsRef.current = { ...prefsRef.current, localDemo: true, currentGroupId: next.currentGroupId };
+        await savePrefs(prefsRef.current);
+        setLocalDemo(true);
         setError(null);
         return true;
       },

@@ -69,24 +69,28 @@ npm run web          # browser preview
 | App Store | [Apple Developer Program](https://developer.apple.com/programs/) | $99 a year. A Mac is not required if you use Expo's cloud build. |
 | Google Play | [Play Console](https://play.google.com/console) | $25 once. |
 
-You can ignore Supabase until you want a second phone in the same group. Until then the app is complete on one device, including switching between family members.
+Without those env vars the app is complete on one device, including switching between family members. The public web build already has them.
 
-## Turn on Supabase
+## Supabase
 
-1. Create a project at [supabase.com/dashboard](https://supabase.com/dashboard). The free plan is enough.
-2. Open the SQL editor and run the whole file `supabase/schema.sql`.
-3. Authentication → Sign In / Providers:
-   - Turn on **Anonymous** if you want name-only sign-in.
-   - Under Email, turn off **Confirm email** if you do not want a confirmation step for family testing.
-4. Project Settings → API. Copy the project URL and the **publishable** key (older projects call this the **anon** key).
-5. Copy `.env.example` to `.env.local` and fill in:
+The shared database is already live. The GitHub Pages build at https://carlsonmichael6453.github.io/christmas-app/ sets these public client values when it exports:
 
 ```bash
-EXPO_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
-EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
+EXPO_PUBLIC_SUPABASE_URL=https://lqkffrqtkykuirarnrkq.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_GJGsmtk47WBbzXwn5fPSUg_NJHSjzSK
 ```
 
-6. Stop Expo and start it again. The sign-in screen will say it is connected to Supabase.
+The same names are in `.env.example`. They are the publishable key, not a secret. Sign-in on that site uses Supabase. **Load the demo** is still there and stays in the browser; it does not write to the database.
+
+Authentication on the live project:
+
+- **Anonymous** sign-in is on, so a name alone calls `signInAnonymously`.
+- **Confirm email** is off, so an email and password can sign in immediately.
+- Site URL and redirect are `https://carlsonmichael6453.github.io/christmas-app/`.
+
+`supabase/schema.sql` is the script applied to that project. `create_group` draws the join code with `extensions.gen_random_bytes`, and `join_group` no longer shadows the `FOUND` flag. Row level security is unchanged in intent: claims stay hidden from the gift owner, and a Secret Santa slip is readable only by the giver.
+
+To point a local Expo Go session at the same project, copy `.env.example` to `.env.local` and restart Expo. Leave both values blank if you want the phone to stay on-device only.
 
 Do not put the service role key or the database password in the app. The publishable key is meant to ship in the client. Row level security is what keeps claims and Secret Santa slips private:
 
@@ -142,7 +146,7 @@ For the iPhone install from a production build, Apple will ask for TestFlight or
 - `src/logic/derangement.ts` Secret Santa draw
 - `src/logic/visibility.ts` who may see a claim or a purchase
 - `src/logic/party.ts` white elephant and pass-the-present
-- `src/backend/` on-phone database, and the Supabase client used when `.env.local` is set
+- `src/backend/` on-device database, the local demo, and the Supabase client used when the public env vars are set
 - `src/theme/` the ten themes
 - `src/content/` advent doors, cookie recipes, bingo squares
 - `supabase/schema.sql` tables, the server-side draw, and row level security

@@ -32,6 +32,8 @@ jobs:
         run: npx expo export -p web
         env:
           EXPO_NO_TELEMETRY: "1"
+          EXPO_PUBLIC_SUPABASE_URL: https://lqkffrqtkykuirarnrkq.supabase.co
+          EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_GJGsmtk47WBbzXwn5fPSUg_NJHSjzSK
 
       - name: Add Pages routing files
         run: |

@@ -17,11 +17,12 @@ export default function SignIn() {
 
   if (ready && user) return <Redirect href="/(app)/(tabs)" />;
 
+  const emailOn = email.trim().length > 0;
+  const canEnter = name.trim().length >= 2 && (!emailOn || password.length >= 6);
+
   async function enter() {
     setBusy(true);
-    const ok = email.trim()
-      ? await signInEmail(email, password, name || undefined)
-      : await signInName(name);
+    const ok = emailOn ? await signInEmail(email, password, name || undefined) : await signInName(name);
     setBusy(false);
     if (ok) await tap('success');
   }
@@ -32,7 +33,7 @@ export default function SignIn() {
       <Title>Christmas Family</Title>
       <Muted>
         {mode === 'supabase'
-          ? 'This phone is connected to your Supabase project. Sign in and the family stays in sync.'
+          ? 'The family database is connected. Sign in with your name, or add an email and password so you can come back as the same person.'
           : 'No account setup yet. Pick a name and everything stays on this phone until you add Supabase.'}
       </Muted>
       <Card>
@@ -44,26 +45,28 @@ export default function SignIn() {
           placeholder="you@email.com"
           keyboardType="email-address"
         />
-        {email.trim() ? (
+        {emailOn ? (
           <Field label="Password" value={password} onChangeText={setPassword} secureTextEntry placeholder="At least 6 characters" />
-        ) : null}
-        <Button label={busy ? 'One moment…' : 'Come on in'} onPress={() => void enter()} disabled={busy || name.trim().length < 2} />
+        ) : (
+          <Muted>Leave email blank to sign in with just your name.</Muted>
+        )}
+        <Button label={busy ? 'One moment…' : 'Come on in'} onPress={() => void enter()} disabled={busy || !canEnter} />
       </Card>
-      {mode === 'phone' ? (
-        <Card>
-          <Text style={{ color: theme.colors.text, fontFamily: fonts.bold, fontSize: 16 }}>Try the Carlson family</Text>
-          <Muted>
-            Loads Michael, Emma, Lily, and Noah with wishlists, a hidden gift, and a Secret Santa that still needs drawing. You can switch people in Settings.
-          </Muted>
-          <Button
-            label="Load the demo"
-            tone="secondary"
-            onPress={() => {
-              void loadDemo();
-            }}
-          />
-        </Card>
-      ) : null}
+      <Card>
+        <Text style={{ color: theme.colors.text, fontFamily: fonts.bold, fontSize: 16 }}>Try the Carlson family</Text>
+        <Muted>
+          {mode === 'supabase'
+            ? 'Stays in this browser only. Michael, Emma, Lily, and Noah come with wishlists and a Secret Santa that still needs drawing. Nothing is written to the shared database.'
+            : 'Loads Michael, Emma, Lily, and Noah with wishlists, a hidden gift, and a Secret Santa that still needs drawing. You can switch people in Settings.'}
+        </Muted>
+        <Button
+          label="Load the demo"
+          tone="secondary"
+          onPress={() => {
+            void loadDemo();
+          }}
+        />
+      </Card>
       <View />
     </Screen>
   );

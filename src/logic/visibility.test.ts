@@ -159,12 +159,12 @@ describe('supabase policies', () => {
   const sql = readFileSync(path.join(process.cwd(), 'supabase/schema.sql'), 'utf8');
 
   it('denies the gift owner from reading claims', () => {
-    expect(sql).toContain('i.owner_id <> auth.uid()');
+    expect(sql).toContain('i.owner_id <> (select auth.uid())');
     expect(sql).toMatch(/claims_select/);
   });
 
   it('lets a person read only their own Secret Santa slip', () => {
-    expect(sql).toMatch(/giver_id = auth\.uid\(\)/);
+    expect(sql).toMatch(/giver_id = \(select auth\.uid\(\)\)/);
     expect(sql.toLowerCase()).toContain('revoke all on table public.santa_assignments');
   });
 });

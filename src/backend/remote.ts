@@ -34,8 +34,20 @@ function client() {
   return supabase;
 }
 
-function raise(error: { message: string } | null) {
-  if (error) throw new Error(error.message);
+function raise(error: { message: string; code?: string } | null) {
+  if (error) throw new Error(authMessage(error));
+}
+
+function authMessage(error: { message: string; code?: string }) {
+  const code = error.code ?? '';
+  const message = error.message ?? 'Something went wrong.';
+  if (code === 'anonymous_provider_disabled' || /anonymous/i.test(message)) {
+    return 'Name-only sign-in is off in Supabase. Enable Anonymous under Authentication, or use email and a password.';
+  }
+  if (code === 'email_not_confirmed' || /email not confirmed/i.test(message)) {
+    return 'Check your email to confirm the account. For a family test, turn off Confirm email in the Supabase dashboard.';
+  }
+  return message;
 }
 
 function asString(value: unknown, fallback = ''): string {
@@ -75,33 +87,40 @@ async function ensureProfile(name?: string) {
 }
 
 export async function remoteSignInName(name: string) {
+  const clean = name.trim();
+  if (clean.length < 2) throw new Error('Use at least 2 letters so your family knows who you are.');
   const db = client();
-  const { error } = await db.auth.signInAnonymously({ options: { data: { display_name: name.trim() } } });
-  if (error) {
-    if (/anonymous/i.test(error.message)) {
-      throw new Error(
-        'Name-only sign-in is off in Supabase. Enable Anonymous under Authentication, or use email and a password.',
-      );
-    }
-    throw new Error(error.message);
-  }
-  await ensureProfile(name);
+  const { error } = await db.auth.signInAnonymously({ options: { data: { display_name: clean } } });
+  if (error) throw new Error(authMessage(error));
+  await ensureProfile(clean);
 }
 
 export async function remoteSignInEmail(email: string, password: string, name?: string) {
+  const cleanEmail = email.trim();
+  if (!cleanEmail.includes('@') || !cleanEmail.split('@')[1]?.includes('.')) {
+    throw new Error('That email does not look right.');
+  }
+  if (password.length < 6) throw new Error('Use at least 6 characters for the password.');
   const db = client();
-  const existing = await db.auth.signInWithPassword({ email: email.trim(), password });
+  const existing = await db.auth.signInWithPassword({ email: cleanEmail, password });
   if (!existing.error && existing.data.session) {
     await ensureProfile(name);
     return;
   }
+  const wrongPassword =
+    existing.error?.code === 'invalid_credentials' || /invalid login credentials/i.test(existing.error?.message ?? '');
+  if (existing.error && !wrongPassword) throw new Error(authMessage(existing.error));
   const created = await db.auth.signUp({
-    email: email.trim(),
+    email: cleanEmail,
     password,
-    options: { data: { display_name: name?.trim() || email.split('@')[0] } },
+    options: { data: { display_name: name?.trim() || cleanEmail.split('@')[0] } },
   });
   if (created.error) {
-    throw new Error(existing.error?.message || created.error.message);
+    const combined = `${created.error.code ?? ''} ${created.error.message}`;
+    if (/already registered|already been registered|user_already_exists/i.test(combined)) {
+      throw new Error('That email already has an account. Check the password.');
+    }
+    throw new Error(authMessage(created.error));
   }
   if (!created.data.session) {
     throw new Error(
@@ -124,17 +143,25 @@ export async function remoteUpdateName(name: string) {
 }
 
 export async function remoteCreateGroup(name: string) {
-  const { data, error } = await client().rpc('create_group', { group_name: name });
+  const clean = name.trim();
+  if (clean.length < 2) throw new Error('Give the group a name.');
+  const { data, error } = await client().rpc('create_group', { group_name: clean });
   raise(error);
   const row = (Array.isArray(data) ? data[0] : data) as Row | null;
-  return asString(row?.id);
+  const id = asString(row?.id);
+  if (!id) throw new Error('The group was not created.');
+  return id;
 }
 
 export async function remoteJoinGroup(code: string) {
-  const { data, error } = await client().rpc('join_group', { join_code_input: code });
+  const clean = code.trim();
+  if (clean.length < 4) throw new Error('Enter the group code.');
+  const { data, error } = await client().rpc('join_group', { join_code_input: clean });
   raise(error);
   const row = (Array.isArray(data) ? data[0] : data) as Row | null;
-  return asString(row?.id);
+  const id = asString(row?.id);
+  if (!id) throw new Error('No group uses that code.');
+  return id;
 }
 
 export async function remoteAddItem(groupId: string, userId: string, input: ItemInput) {

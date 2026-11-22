@@ -14,7 +14,7 @@
 -- Never put the service role key in the app. The publishable (anon) key is public.
 -- These policies are what keep the data private.
 
-create extension if not exists pgcrypto;
+create extension if not exists pgcrypto with schema extensions;
 
 -- ---------------------------------------------------------------------------
 -- Profiles
@@ -103,7 +103,10 @@ begin
   if length(trim(group_name)) < 2 then
     raise exception 'Give the group a name.';
   end if;
-  code := upper(substr(encode(gen_random_bytes(6), 'hex'), 1, 6));
+  loop
+    code := upper(substr(encode(extensions.gen_random_bytes(6), 'hex'), 1, 6));
+    exit when not exists (select 1 from public.groups where join_code = code);
+  end loop;
   insert into public.groups (name, join_code, owner_id)
   values (trim(group_name), code, auth.uid())
   returning * into created;
@@ -120,21 +123,21 @@ security definer
 set search_path = public
 as $$
 declare
-  found public.groups;
+  target_group public.groups;
 begin
   if auth.uid() is null then
     raise exception 'Sign in first.';
   end if;
-  select * into found
+  select * into target_group
   from public.groups
   where upper(join_code) = upper(trim(join_code_input));
   if not found then
     raise exception 'No group uses that code.';
   end if;
   insert into public.memberships (group_id, user_id, role)
-  values (found.id, auth.uid(), 'member')
+  values (target_group.id, auth.uid(), 'member')
   on conflict (group_id, user_id) do nothing;
-  return found;
+  return target_group;
 end;
 $$;
 
@@ -200,6 +203,7 @@ create or replace function public._pair_excluded(exclusions jsonb, x uuid, y uui
 returns boolean
 language sql
 immutable
+set search_path = public
 as $$
   select exists (
     select 1
@@ -212,6 +216,7 @@ $$;
 create or replace function public._shuffle_uuids(arr uuid[])
 returns uuid[]
 language plpgsql
+set search_path = public
 as $$
 declare
   i int;
@@ -243,6 +248,7 @@ create or replace function public._santa_search(
 )
 returns uuid[]
 language plpgsql
+set search_path = public
 as $$
 declare
   giver uuid;
@@ -441,25 +447,25 @@ drop policy if exists profiles_select on public.profiles;
 create policy profiles_select on public.profiles
   for select to authenticated
   using (
-    id = auth.uid()
+    id = (select auth.uid())
     or exists (
       select 1
       from public.memberships mine
       join public.memberships theirs on mine.group_id = theirs.group_id
-      where mine.user_id = auth.uid() and theirs.user_id = profiles.id
+      where mine.user_id = (select auth.uid()) and theirs.user_id = profiles.id
     )
   );
 
 drop policy if exists profiles_insert on public.profiles;
 create policy profiles_insert on public.profiles
   for insert to authenticated
-  with check (id = auth.uid());
+  with check (id = (select auth.uid()));
 
 drop policy if exists profiles_update on public.profiles;
 create policy profiles_update on public.profiles
   for update to authenticated
-  using (id = auth.uid())
-  with check (id = auth.uid());
+  using (id = (select auth.uid()))
+  with check (id = (select auth.uid()));
 
 drop policy if exists groups_select on public.groups;
 create policy groups_select on public.groups
@@ -479,18 +485,18 @@ create policy items_select on public.wish_items
 drop policy if exists items_insert on public.wish_items;
 create policy items_insert on public.wish_items
   for insert to authenticated
-  with check (public.is_member(group_id) and owner_id = auth.uid());
+  with check (public.is_member(group_id) and owner_id = (select auth.uid()));
 
 drop policy if exists items_update on public.wish_items;
 create policy items_update on public.wish_items
   for update to authenticated
-  using (owner_id = auth.uid())
-  with check (owner_id = auth.uid() and public.is_member(group_id));
+  using (owner_id = (select auth.uid()))
+  with check (owner_id = (select auth.uid()) and public.is_member(group_id));
 
 drop policy if exists items_delete on public.wish_items;
 create policy items_delete on public.wish_items
   for delete to authenticated
-  using (owner_id = auth.uid());
+  using (owner_id = (select auth.uid()));
 
 -- The gift owner cannot read claim rows for their own items.
 drop policy if exists claims_select on public.claims;
@@ -500,7 +506,7 @@ create policy claims_select on public.claims
     public.is_member(group_id)
     and not exists (
       select 1 from public.wish_items item
-      where item.id = claims.item_id and item.owner_id = auth.uid()
+      where item.id = claims.item_id and item.owner_id = (select auth.uid())
     )
   );
 
@@ -509,25 +515,25 @@ create policy claims_insert on public.claims
   for insert to authenticated
   with check (
     public.is_member(group_id)
-    and claimer_id = auth.uid()
+    and claimer_id = (select auth.uid())
     and exists (
       select 1 from public.wish_items i
       where i.id = item_id
         and i.group_id = claims.group_id
-        and i.owner_id <> auth.uid()
+        and i.owner_id <> (select auth.uid())
     )
   );
 
 drop policy if exists claims_update on public.claims;
 create policy claims_update on public.claims
   for update to authenticated
-  using (claimer_id = auth.uid() and public.is_member(group_id))
-  with check (claimer_id = auth.uid());
+  using (claimer_id = (select auth.uid()) and public.is_member(group_id))
+  with check (claimer_id = (select auth.uid()));
 
 drop policy if exists claims_delete on public.claims;
 create policy claims_delete on public.claims
   for delete to authenticated
-  using (claimer_id = auth.uid());
+  using (claimer_id = (select auth.uid()));
 
 drop policy if exists events_select on public.santa_events;
 create policy events_select on public.santa_events
@@ -537,23 +543,23 @@ create policy events_select on public.santa_events
 drop policy if exists events_insert on public.santa_events;
 create policy events_insert on public.santa_events
   for insert to authenticated
-  with check (public.is_member(group_id) and organizer_id = auth.uid());
+  with check (public.is_member(group_id) and organizer_id = (select auth.uid()));
 
 drop policy if exists events_update on public.santa_events;
 create policy events_update on public.santa_events
   for update to authenticated
-  using (organizer_id = auth.uid() and public.is_member(group_id))
-  with check (organizer_id = auth.uid());
+  using (organizer_id = (select auth.uid()) and public.is_member(group_id))
+  with check (organizer_id = (select auth.uid()));
 
 drop policy if exists events_delete on public.santa_events;
 create policy events_delete on public.santa_events
   for delete to authenticated
-  using (organizer_id = auth.uid());
+  using (organizer_id = (select auth.uid()));
 
 drop policy if exists assignments_select on public.santa_assignments;
 create policy assignments_select on public.santa_assignments
   for select to authenticated
-  using (giver_id = auth.uid());
+  using (giver_id = (select auth.uid()));
 
 drop policy if exists records_select on public.group_records;
 create policy records_select on public.group_records
@@ -561,7 +567,7 @@ create policy records_select on public.group_records
   using (
     public.is_member(group_id)
     and (
-      author_id = auth.uid()
+      author_id = (select auth.uid())
       or kind in ('letter', 'sweater', 'vote', 'light', 'cookie', 'party')
       or (kind = 'resolution' and coalesce((payload ->> 'shared')::boolean, false))
     )
@@ -570,7 +576,7 @@ create policy records_select on public.group_records
 drop policy if exists records_insert on public.group_records;
 create policy records_insert on public.group_records
   for insert to authenticated
-  with check (public.is_member(group_id) and author_id = auth.uid());
+  with check (public.is_member(group_id) and author_id = (select auth.uid()));
 
 drop policy if exists records_update on public.group_records;
 create policy records_update on public.group_records
@@ -578,7 +584,7 @@ create policy records_update on public.group_records
   using (
     public.is_member(group_id)
     and (
-      author_id = auth.uid()
+      author_id = (select auth.uid())
       or kind = 'party'
       or kind = 'vote'
       or (kind = 'resolution' and coalesce((payload ->> 'shared')::boolean, false))
@@ -590,7 +596,7 @@ drop policy if exists records_delete on public.group_records;
 create policy records_delete on public.group_records
   for delete to authenticated
   using (
-    author_id = auth.uid()
+    author_id = (select auth.uid())
     or (kind = 'party' and public.is_member(group_id))
     or (kind = 'vote' and public.is_member(group_id))
   );
@@ -607,11 +613,35 @@ grant select, insert, update, delete on public.claims to authenticated;
 grant select, insert, update, delete on public.santa_events to authenticated;
 grant select, insert, update, delete on public.group_records to authenticated;
 
+-- Postgres grants EXECUTE to PUBLIC by default; only signed-in users may call these.
+revoke all on function public.handle_new_user() from public, anon, authenticated;
+revoke all on function public.is_member(uuid) from public, anon;
+revoke all on function public.create_group(text) from public, anon;
+revoke all on function public.join_group(text) from public, anon;
+revoke all on function public.draw_secret_santa(uuid) from public, anon;
+revoke all on function public.reset_secret_santa(uuid) from public, anon;
 grant execute on function public.is_member(uuid) to authenticated;
 grant execute on function public.create_group(text) to authenticated;
 grant execute on function public.join_group(text) to authenticated;
 grant execute on function public.draw_secret_santa(uuid) to authenticated;
 grant execute on function public.reset_secret_santa(uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Indexes for foreign keys and policy lookups
+-- ---------------------------------------------------------------------------
+
+create index if not exists groups_owner_id_idx on public.groups (owner_id);
+create index if not exists memberships_user_id_idx on public.memberships (user_id);
+create index if not exists wish_items_group_id_idx on public.wish_items (group_id);
+create index if not exists wish_items_owner_id_idx on public.wish_items (owner_id);
+create index if not exists claims_group_id_idx on public.claims (group_id);
+create index if not exists claims_claimer_id_idx on public.claims (claimer_id);
+create index if not exists santa_events_group_id_idx on public.santa_events (group_id);
+create index if not exists santa_events_organizer_id_idx on public.santa_events (organizer_id);
+create index if not exists santa_assignments_giver_id_idx on public.santa_assignments (giver_id);
+create index if not exists santa_assignments_receiver_id_idx on public.santa_assignments (receiver_id);
+create index if not exists group_records_group_id_idx on public.group_records (group_id);
+create index if not exists group_records_author_id_idx on public.group_records (author_id);
 
 -- ---------------------------------------------------------------------------
 -- Realtime

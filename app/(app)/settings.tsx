@@ -18,7 +18,7 @@ export default function Settings() {
       <Muted>
         {app.mode === 'supabase'
           ? 'Signed in through Supabase. Gift claims and Secret Santa slips follow the database rules.'
-          : 'This phone is the whole backend. Switch family members here to see what someone else is allowed to see.'}
+          : 'This device is the whole backend. Switch family members here to see what someone else is allowed to see.'}
       </Muted>
       <Card>
         <Heading>Your name</Heading>
