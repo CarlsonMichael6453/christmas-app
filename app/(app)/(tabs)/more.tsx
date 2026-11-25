@@ -1,10 +1,14 @@
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Platform, Pressable, Switch, Text, View } from 'react-native';
 
 import { useApp } from '@/src/backend/AppState';
 import { LightPreview } from '@/src/components/StringLights';
 import { Avatar, Button, Card, Field, Heading, Muted, Row, Screen, Title } from '@/src/components/ui';
+import { requestStoreReview } from '@/src/feedback/reviewStore';
+import { sendFeedback } from '@/src/feedback/sendFeedback';
+import { feedbackBody } from '@/src/logic/feedbackMail';
 import { shareText } from '@/src/logic/feedback';
 import { useTheme } from '@/src/theme/ThemeProvider';
 
@@ -14,10 +18,51 @@ export default function More() {
   const [name, setName] = useState(app.user?.displayName ?? '');
   const [groupName, setGroupName] = useState('Carlson Family');
   const [joinCode, setJoinCode] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [feedbackName, setFeedbackName] = useState('');
+  const [feedbackEmail, setFeedbackEmail] = useState('');
+  const [feedbackNote, setFeedbackNote] = useState('');
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     setName(app.user?.displayName ?? '');
   }, [app.user?.id, app.user?.displayName]);
+
+  async function rate() {
+    const result = await requestStoreReview();
+    if (result === 'unavailable') {
+      setFeedbackNote('A store review is not available here. A note below still reaches us.');
+    }
+  }
+
+  async function submitFeedback() {
+    const message = feedback.trim();
+    if (message.length < 2) {
+      setFeedbackNote('Write a sentence or two first.');
+      return;
+    }
+    setSending(true);
+    try {
+      const version = Constants.expoConfig?.version ?? '1.0.0';
+      const device = Constants.deviceName;
+      await sendFeedback(
+        feedbackBody({
+          message,
+          name: feedbackName,
+          email: feedbackEmail,
+          version,
+          platform: Platform.OS,
+          device,
+        }),
+      );
+      setFeedback('');
+      setFeedbackNote('Thank you. Your mail app should be open with the note.');
+    } catch {
+      setFeedbackNote('Could not open mail. Write to bykeh1sy@mail.grokbot.com if it stays closed.');
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <Screen>
@@ -199,6 +244,26 @@ export default function More() {
             : 'This device is the whole backend.'}
         </Muted>
       )}
+      <Card>
+        <Heading>Rate the app</Heading>
+        <Muted>
+          {Platform.OS === 'web'
+            ? 'Store reviews stay on the phone. On the web, send a note instead.'
+            : 'If the store can show it, this asks once. Otherwise the note below is the way to write.'}
+        </Muted>
+        <Button label="Rate the app" tone="secondary" onPress={() => void rate()} />
+        {feedbackNote ? <Muted>{feedbackNote}</Muted> : null}
+        <Field label="A note" value={feedback} onChangeText={setFeedback} multiline placeholder="What should we change?" />
+        <Field label="Name, if you want" value={feedbackName} onChangeText={setFeedbackName} placeholder="Optional" />
+        <Field
+          label="Email, if you want a reply"
+          value={feedbackEmail}
+          onChangeText={setFeedbackEmail}
+          placeholder="Optional"
+          keyboardType="email-address"
+        />
+        <Button label={sending ? 'Opening mail…' : 'Send feedback'} onPress={() => void submitFeedback()} disabled={sending} />
+      </Card>
       <Button
         label="Sign out"
         tone="danger"

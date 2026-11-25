@@ -6,6 +6,7 @@ import { ActivityIndicator, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppProvider, useApp } from '@/src/backend/AppState';
+import { rememberFirstOpen } from '@/src/feedback/reviewStore';
 import { Snow } from '@/src/components/Snow';
 import { StringLights } from '@/src/components/StringLights';
 import { ThemeProvider, useTheme } from '@/src/theme/ThemeProvider';
@@ -34,6 +35,10 @@ function RootNavigator() {
   useEffect(() => {
     if (loaded) void SplashScreen.hideAsync();
   }, [loaded]);
+
+  useEffect(() => {
+    void rememberFirstOpen();
+  }, []);
 
   if (!loaded) {
     return (
