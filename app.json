@@ -39,7 +39,8 @@
           "backgroundColor": "#8E1B2C"
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-mail-composer"
     ],
     "experiments": {
       "typedRoutes": true,

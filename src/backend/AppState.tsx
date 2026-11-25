@@ -97,6 +97,7 @@ import {
   remoteUpdateItem,
   remoteUpdateName,
 } from '@/src/backend/remote';
+import { notePositiveUse } from '@/src/feedback/reviewStore';
 import { demoDatabase } from '@/src/backend/seed';
 import { loadLocal, loadPrefs, saveLocal, savePrefs, type Prefs } from '@/src/backend/storage';
 import { supabase, supabaseConfigured } from '@/src/backend/supabase';
@@ -501,11 +502,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return true;
       },
       addItem: async (input) => {
-        if (mode === 'phone') return commit((draft) => addItemMut(draft, input));
-        return afterRemote(async () => {
-          const ids = requireIds();
-          await remoteAddItem(ids.groupId, ids.userId, input);
-        });
+        const saved = mode === 'phone'
+          ? commit((draft) => addItemMut(draft, input))
+          : await afterRemote(async () => {
+              const ids = requireIds();
+              await remoteAddItem(ids.groupId, ids.userId, input);
+            });
+        if (saved) void notePositiveUse('wish');
+        return saved;
       },
       updateItem: async (id, input) => {
         if (mode === 'phone') return commit((draft) => updateItemMut(draft, id, input));
@@ -569,18 +573,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
       },
       draw: async (eventId) => {
+        const finish = (result: { ok: boolean; reason?: string }) => {
+          if (result.ok) void notePositiveUse('draw');
+          return result;
+        };
         if (mode === 'phone') {
           let result: { ok: true } | { ok: false; reason: string } = { ok: false, reason: 'Not ready.' };
           const saved = commit((draft) => {
             result = runDraw(draft, eventId);
           });
           if (!saved) return { ok: false, reason: error ?? 'Could not draw names.' };
-          return result.ok ? { ok: true } : result;
+          return finish(result.ok ? { ok: true } : result);
         }
         try {
           const result = await remoteDraw(eventId);
           await refreshRemote();
-          return result.ok ? { ok: true } : result;
+          return finish(result.ok ? { ok: true } : result);
         } catch (drawError) {
           return { ok: false, reason: problem(drawError) };
         }
