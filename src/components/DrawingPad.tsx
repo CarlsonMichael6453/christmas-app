@@ -1,5 +1,5 @@
 import { memo, useEffect, useRef, useState } from 'react';
-import { PanResponder, Platform, View } from 'react-native';
+import { PanResponder, Platform, View, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { LetterPaperBackdrop, findPaper } from '@/src/components/LetterPaper';
@@ -145,9 +145,9 @@ export function DrawingPad({
     ]);
   }
 
-  const webLock =
+  const webLock: ViewStyle | null =
     Platform.OS === 'web'
-      ? ({ touchAction: 'none', overscrollBehavior: 'none', userSelect: 'none' } as const)
+      ? ({ touchAction: 'none', overscrollBehavior: 'none', userSelect: 'none' } as ViewStyle)
       : null;
 
   return (
