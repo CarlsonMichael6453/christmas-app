@@ -25,6 +25,7 @@ import type {
 import { uid } from '@/src/logic/format';
 import { emptyParty } from '@/src/logic/party';
 import { emptyDB } from '@/src/backend/mutate';
+import { groupIdFromJoinRpc } from '@/src/backend/joinResult';
 import { supabase } from '@/src/backend/supabase';
 
 type Row = Record<string, unknown>;
@@ -157,11 +158,7 @@ export async function remoteJoinGroup(code: string) {
   const clean = code.trim();
   if (clean.length < 4) throw new Error('Enter the group code.');
   const { data, error } = await client().rpc('join_group', { join_code_input: clean });
-  raise(error);
-  const row = (Array.isArray(data) ? data[0] : data) as Row | null;
-  const id = asString(row?.id);
-  if (!id) throw new Error('No group uses that code.');
-  return id;
+  return groupIdFromJoinRpc(data, error);
 }
 
 export async function remoteAddItem(groupId: string, userId: string, input: ItemInput) {
